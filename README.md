@@ -1,1 +1,5 @@
 # UnityEditorAssetDependencyDetail
+
+対象のアセットの Dependency を検索し一覧とサイズを表示するツール
+
+これによりサイズの大きいアセットが含まれている場合に用意に検索することが可能になる
