@@ -14,6 +14,7 @@ namespace Yorozu.EditorTool
     {
         internal DetailTreeView(TreeViewState state, MultiColumnHeader multiColumnHeader) : base(state, multiColumnHeader)
         {
+            columnIndexForTreeFoldouts = 1;
             baseIndent -= 10f;
             showAlternatingRowBackgrounds = true;
             showBorder = true;
@@ -31,10 +32,10 @@ namespace Yorozu.EditorTool
             if (GetRows().Count <= 1)
                 return;
             
-            Sort();
+            Sort(rootItem, GetRows());
         }
 
-        private void Sort()
+        private void Sort(TreeViewItem root, IList<TreeViewItem> rows)
         {
             var sortedColumns = multiColumnHeader.state.sortedColumns;
             if (multiColumnHeader.sortedColumnIndex == -1 ||
@@ -63,7 +64,39 @@ namespace Yorozu.EditorTool
             }
 
             rootItem.children = items.Cast<TreeViewItem>().ToList();
+            TreeToList(root, rows);
             Repaint();
+        }
+        
+        private static void TreeToList (TreeViewItem root, IList<TreeViewItem> result)
+        {
+            if (root == null)
+                throw new NullReferenceException("root");
+            if (result == null)
+                throw new NullReferenceException("result");
+
+            result.Clear();
+	
+            if (root.children == null)
+                return;
+
+            var stack = new Stack<TreeViewItem>();
+            for (var i = root.children.Count - 1; i >= 0; i--)
+                stack.Push(root.children[i]);
+
+            while (stack.Count > 0)
+            {
+                var current = stack.Pop();
+                result.Add(current);
+
+                if (!current.hasChildren || current.children[0] == null) 
+                    continue;
+                
+                for (var i = current.children.Count - 1; i >= 0; i--)
+                {
+                    stack.Push(current.children[i]);
+                }
+            }
         }
         
         protected override TreeViewItem BuildRoot()
@@ -78,8 +111,10 @@ namespace Yorozu.EditorTool
             if (!root.hasChildren)
                 return new List<TreeViewItem>();
 
-            Sort();
-            return base.BuildRows(root);
+            var rows = base.BuildRows(root);
+            ; 
+            Sort(root, rows);
+            return rows;
         }
         
         protected override void DoubleClickedItem(int id)
