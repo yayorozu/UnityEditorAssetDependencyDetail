@@ -47,7 +47,9 @@ namespace Yorozu.EditorTool
             var ascending = multiColumnHeader.IsSortedAscending(sortedColumns[0]);
             var items = sortedColumns[0] == 1 ? 
                 cast.Order(i => i.Size, ascending) : 
-                cast.Order(i => i.displayName, ascending);
+                sortedColumns[0] == 2 ?
+                    cast.Order(i => i.Path, ascending) :
+                    cast.Order(i => i.displayName, ascending);
                                 
             for (var i = 1; i < sortedColumns.Length; i++)
             {
@@ -59,6 +61,9 @@ namespace Yorozu.EditorTool
                         break;
                     case 1:
                         items = items.ThenBy(i => i.Size, ascending);
+                        break;
+                    case 2:
+                        items = items.ThenBy(i => i.Path, ascending);
                         break;
                 }
             }
@@ -134,9 +139,11 @@ namespace Yorozu.EditorTool
                     case 0:
                         base.RowGUI(args);
                         break;
-                    // Size
                     case 1:
                         EditorGUI.LabelField(args.GetCellRect(columnIndex), item.SizeText);
+                        break;
+                    case 2:
+                        EditorGUI.LabelField(args.GetCellRect(columnIndex), item.Path);
                         break;
                 }
             }
@@ -154,10 +161,18 @@ namespace Yorozu.EditorTool
                     headerContent = new GUIContent("Name"),
                     autoResize = true,
                     allowToggleVisibility = false,
+                    width = 130,
                 },
                 new MultiColumnHeaderState.Column()
                 {
                     headerContent = new GUIContent("Size"),
+                    autoResize = true,
+                    allowToggleVisibility = false,
+                    width = 40,
+                },
+                new MultiColumnHeaderState.Column()
+                {
+                    headerContent = new GUIContent("Path"),
                     autoResize = true,
                     allowToggleVisibility = false,
                 },
@@ -181,12 +196,11 @@ namespace Yorozu.EditorTool
     {
         internal string SizeText;
         internal long Size;
-        
-        private string _path;
+        internal string Path;
         
         internal DetailTreeViewItem(string assetPath)
         {
-            _path = assetPath;
+            Path = assetPath;
             depth = 0;
             displayName = System.IO.Path.GetFileNameWithoutExtension(assetPath);
             icon = (Texture2D) AssetDatabase.GetCachedIcon(assetPath);
