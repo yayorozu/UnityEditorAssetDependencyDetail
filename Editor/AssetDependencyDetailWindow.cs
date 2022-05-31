@@ -63,14 +63,17 @@ namespace Yorozu.EditorTool
         private void OnGUI()
         {
             InitIfNeeded();
-            
-            _searchTarget = EditorGUILayout.ObjectField("Target", _searchTarget, typeof(Object), false);
-            using (new EditorGUI.DisabledScope(!_searchTarget))
+
+            using (var check = new EditorGUI.ChangeCheckScope())
             {
-                if (GUILayout.Button("Search Dependency"))
+                _searchTarget = EditorGUILayout.ObjectField("Target", _searchTarget, typeof(Object), false);
+                if (check.changed)
                 {
-                    _treeView.Reload();
-                    Repaint();
+                    if (_searchTarget != null)
+                    {
+                        _treeView.Reload();
+                        Repaint();
+                    }
                 }
             }
             
