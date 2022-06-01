@@ -31,10 +31,10 @@ namespace Yorozu.EditorTool
             if (GetRows().Count <= 1)
                 return;
             
-            Sort(rootItem, GetRows());
+            Sort(GetRows());
         }
 
-        private void Sort(TreeViewItem root, IList<TreeViewItem> rows)
+        private void Sort(IList<TreeViewItem> rows)
         {
             var sortedColumns = multiColumnHeader.state.sortedColumns;
             if (multiColumnHeader.sortedColumnIndex == -1 ||
@@ -107,8 +107,7 @@ namespace Yorozu.EditorTool
                 return new List<TreeViewItem>();
 
             var rows = base.BuildRows(root);
-            ; 
-            Sort(root, rows);
+            Sort(rows);
             return rows;
         }
         
