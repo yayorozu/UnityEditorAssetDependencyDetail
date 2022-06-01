@@ -3,7 +3,6 @@ using System.Collections.Generic;
 using System.Linq;
 using UnityEditor;
 using UnityEditor.IMGUI.Controls;
-using UnityEditor.TreeViewExamples;
 using UnityEngine;
 using UnityEngine.Profiling;
 using Object = UnityEngine.Object;
@@ -45,11 +44,7 @@ namespace Yorozu.EditorTool
             
             var cast = rootItem.children.Cast<DetailTreeViewItem>();
             var ascending = multiColumnHeader.IsSortedAscending(sortedColumns[0]);
-            var items = sortedColumns[0] == 1 ? 
-                cast.Order(i => i.Size, ascending) : 
-                sortedColumns[0] == 2 ?
-                    cast.Order(i => i.Path, ascending) :
-                    cast.Order(i => i.displayName, ascending);
+            var items = InitialOrder(cast, ascending);
                                 
             for (var i = 1; i < sortedColumns.Length; i++)
             {
@@ -57,50 +52,45 @@ namespace Yorozu.EditorTool
                 switch (sortedColumns[i])
                 {
                     case 0:
-                        items = items.ThenBy(i => i.displayName, ascending);
+                        items = ThenBy(items, i => i.displayName, ascending);
                         break;
                     case 1:
-                        items = items.ThenBy(i => i.Size, ascending);
+                        items = ThenBy(items, i => i.Size, ascending);
                         break;
                     case 2:
-                        items = items.ThenBy(i => i.Path, ascending);
+                        items = ThenBy(items, i => i.Path, ascending);
                         break;
                 }
             }
+            IOrderedEnumerable<T> ThenBy<T, TKey>(IOrderedEnumerable<T> source, Func<T, TKey> selector, bool ascending)
+            {
+                return @ascending ? source.ThenBy(selector) : source.ThenByDescending(selector);
+            }
 
             rootItem.children = items.Cast<TreeViewItem>().ToList();
-            TreeToList(root, rows);
+            rows.Clear();
+            foreach (var item in rootItem.children)
+            {
+                rows.Add(item);
+            }
             Repaint();
         }
-        
-        private static void TreeToList (TreeViewItem root, IList<TreeViewItem> result)
+
+        private IOrderedEnumerable<DetailTreeViewItem> InitialOrder(IEnumerable<DetailTreeViewItem> items, bool ascending)
         {
-            if (root == null)
-                throw new NullReferenceException("root");
-            if (result == null)
-                throw new NullReferenceException("result");
-
-            result.Clear();
-	
-            if (root.children == null)
-                return;
-
-            var stack = new Stack<TreeViewItem>();
-            for (var i = root.children.Count - 1; i >= 0; i--)
-                stack.Push(root.children[i]);
-
-            while (stack.Count > 0)
+            switch (multiColumnHeader.state.sortedColumns[0])
             {
-                var current = stack.Pop();
-                result.Add(current);
-
-                if (!current.hasChildren || current.children[0] == null) 
-                    continue;
-                
-                for (var i = current.children.Count - 1; i >= 0; i--)
-                {
-                    stack.Push(current.children[i]);
-                }
+                case 1:
+                    return Order(items, i => i.Size);
+                case 2:
+                    return Order(items, i => i.Path);
+                default:
+                    return Order(items, i => i.displayName);
+            }
+            
+            IOrderedEnumerable<T> Order<T, TKey>(IEnumerable<T> source, Func<T, TKey> selector)
+            {
+                return @ascending ? source.OrderBy(selector) : source.OrderByDescending(selector);
             }
         }
         
